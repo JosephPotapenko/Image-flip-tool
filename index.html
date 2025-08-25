@@ -1,37 +1,317 @@
-<!-- TO ACHIEVE THIS TYPE IN "!" AND PRESS "TAB" -->
 <!DOCTYPE html>
-<!-- html below is a tag pair. "lang" is a language setting and is set to English. Html has 2 children: head and body -->
 <html lang="en">
-<!-- head below is a tag pair. It contains metadata about the document and links to external resources. -->
 <head>
-    <!-- meta below is a tag pair. It provides metadata about the HTML document. chrset = "UTF-8" is pulling all latin charachters-->
-    <meta charset="UTF-8">
-    <!-- Tag pair. Provides metadata about the HTML document. name = "viewport" is setting the viewport to the device's width and initial scale to 1.0 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Dev Starter</title>
+  <meta charset="UTF-8">
+  <title>Sprite Flipper</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      padding: 32px 48px;
+    }
+    #controls {
+      margin-bottom: 15px;
+    }
+    button {
+      margin: 3px;
+      padding: 6px 12px;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    button:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      transform: translateY(-2px) scale(1.04);
+      filter: brightness(1.08);
+    }
+    /* Flip button: white with black text */
+    #flipBtn {
+      background: #fff;
+      color: #222;
+      border: 2px solid #222;
+    }
+    #flipBtn:hover {
+      background: #f5f5f5;
+      color: #111;
+      border-color: #111;
+    }
+    /* Select buttons: dark muted blue */
+    #selectAllBtn, #selectAllImportedBtn, #selectAllFlippedBtn {
+      background: #267296;
+    }
+    #selectAllBtn:hover, #selectAllImportedBtn:hover, #selectAllFlippedBtn:hover {
+      background: #267296;
+    }
+    /* Deselect buttons: dark muted red */
+    #deselectAllBtn, #deselectAllImportedBtn, #deselectAllFlippedBtn {
+      background: #b93720;
+    }
+    #deselectAllBtn:hover, #deselectAllImportedBtn:hover, #deselectAllFlippedBtn:hover {
+      background: #b93720;
+    }
+    /* Download buttons: pleasant green */
+    #downloadSelectedBtn, #downloadAllBtn {
+      background: #0ebb42;
+    }
+    #downloadSelectedBtn:hover, #downloadAllBtn:hover {
+      background: #0ebb42;
+    }
 
-    <!-- Favicons -->
-    <link rel="icon" type="image/png" href="/favicons/favicon-48x48.png" sizes="48x48" />
-    <link rel="icon" type="image/svg+xml" href="/favicons/favicon.svg" />
-    <link rel="shortcut icon" href="/favicons/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="Web Dev Starter" />
-    <link rel="manifest" href="/favicons/site.webmanifest" />    
-
-    <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css">
-
-    <!-- JavaScript -->
-     <!-- script:src and then press tab for shortcut-->
-    <script src="script.js" defer> </script>
-
+    #gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, 100px);
+      gap: 10px;
+      position: relative;
+    }
+    .sprite {
+      border: 2px solid transparent;
+      cursor: pointer;
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      background: white;
+      padding: 4px;
+      border-radius: 6px;
+      transition: box-shadow 0.2s, transform 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .sprite:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      transform: translateY(-4px) scale(1.04);
+      z-index: 2;
+    }
+    .selected {
+      border: 2px solid dodgerblue;
+      background: #e8f0ff;
+    }
+    #selectionBox {
+      position: absolute;
+      border: 2px dashed #555;
+      background: rgba(100, 100, 255, 0.2);
+      display: none;
+      pointer-events: none;
+    }
+  </style>
 </head>
-
-<!-- body below is a tag pair. It contains the content of the document. -->
 <body>
+  <h2>Sprite Flipper Tool</h2>
+  <div id="controls">
+    <input type="file" id="fileInput" multiple accept="image/*">
+    <button id="flipBtn">Flip Sprites</button>
+    <button id="selectAllBtn">Select All</button>
+    <button id="deselectAllBtn">Deselect All</button>
+    <button id="downloadSelectedBtn">Download Selected</button>
+    <button id="downloadAllBtn">Download All</button>
+  </div>
 
-    <h1>Web Dev Starter</h1>
+  <div style="display: flex; gap: 48px; width: 100%; height: 80vh;">
+    <div style="flex: 1; display: flex; flex-direction: column; height: 100%; border-right: 2px solid #eee;">
+      <h3 style="text-align:center;">Imported Images</h3>
+      <div style="text-align:center; margin-bottom: 8px;">
+        <button id="selectAllImportedBtn">Select All Imported</button>
+        <button id="deselectAllImportedBtn">Deselect All Imported</button>
+      </div>
+      <div id="gallery" style="flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; padding: 10px; overflow-y: auto; height: 100%;"></div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; height: 100%;">
+      <h3 style="text-align:center;">Flipped Images</h3>
+      <div style="text-align:center; margin-bottom: 8px;">
+        <button id="selectAllFlippedBtn">Select All Flipped</button>
+        <button id="deselectAllFlippedBtn">Deselect All Flipped</button>
+      </div>
+      <div id="flippedGallery" style="flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; padding: 10px; overflow-y: auto; height: 100%;"></div>
+    </div>
+  </div>
+  <div id="selectionBox"></div>
 
+  <script>
+    const fileInput = document.getElementById('fileInput');
+  const gallery = document.getElementById('gallery');
+  const flippedGallery = document.getElementById('flippedGallery');
+  const selectAllFlippedBtn = document.getElementById('selectAllFlippedBtn');
+  const deselectAllFlippedBtn = document.getElementById('deselectAllFlippedBtn');
+  const selectAllImportedBtn = document.getElementById('selectAllImportedBtn');
+  const deselectAllImportedBtn = document.getElementById('deselectAllImportedBtn');
+    function setImportedSelected(selected) {
+      sprites.forEach(s => {
+        if (selected) s.element.classList.add('selected');
+        else s.element.classList.remove('selected');
+      });
+    }
+  selectAllImportedBtn.addEventListener('click', () => setImportedSelected(true));
+  deselectAllImportedBtn.addEventListener('click', () => setImportedSelected(false));
+    const flipBtn = document.getElementById('flipBtn');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const deselectAllBtn = document.getElementById('deselectAllBtn');
+    const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const selectionBox = document.getElementById('selectionBox');
+
+  let sprites = []; // { img, fileName, flipped?, element }
+  let flippedSprites = []; // { img, fileName, flipped: true, element }
+
+    fileInput.addEventListener('change', handleFiles);
+    flipBtn.addEventListener('click', flipSprites);
+  selectAllBtn.addEventListener('click', () => setAllSelected(true));
+  deselectAllBtn.addEventListener('click', () => setAllSelected(false));
+  selectAllFlippedBtn.addEventListener('click', () => setFlippedSelected(true));
+  deselectAllFlippedBtn.addEventListener('click', () => setFlippedSelected(false));
+    downloadSelectedBtn.addEventListener('click', () => downloadSprites(true));
+    downloadAllBtn.addEventListener('click', () => downloadSprites(false));
+
+    function handleFiles(e) {
+      for (let file of e.target.files) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          addSprite(ev.target.result, file.name, false);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function addSprite(src, name, flipped) {
+      const img = document.createElement('img');
+      img.src = src;
+      img.classList.add('sprite');
+      img.title = name + (flipped ? " (flipped)" : "");
+      img.addEventListener('click', () => img.classList.toggle('selected'));
+      if (flipped) {
+        flippedGallery.appendChild(img);
+        flippedSprites.push({ img, fileName: name, flipped, element: img });
+      } else {
+        gallery.appendChild(img);
+        sprites.push({ img, fileName: name, flipped, element: img });
+      }
+    }
+
+    function flipSprites() {
+      sprites.filter(s => !s.flipped).forEach(sprite => {
+        const flippedData = flipImage(sprite.img);
+        addSprite(flippedData, sprite.fileName.replace(/\.(\w+)$/, '_flipped.$1'), true);
+      });
+    }
+
+    function flipImage(img) {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, 0, 0);
+      return canvas.toDataURL();
+    }
+
+    function setAllSelected(selected) {
+      sprites.forEach(s => {
+        if (selected) s.element.classList.add('selected');
+        else s.element.classList.remove('selected');
+      });
+      flippedSprites.forEach(s => {
+        if (selected) s.element.classList.add('selected');
+        else s.element.classList.remove('selected');
+      });
+    }
+
+    function setFlippedSelected(selected) {
+      flippedSprites.forEach(s => {
+        if (selected) s.element.classList.add('selected');
+        else s.element.classList.remove('selected');
+      });
+    }
+
+    function downloadSprites(onlySelected) {
+      const chosen = [
+        ...sprites.filter(s => !onlySelected || s.element.classList.contains('selected')),
+        ...flippedSprites.filter(s => !onlySelected || s.element.classList.contains('selected'))
+      ];
+      chosen.forEach((sprite, i) => {
+        setTimeout(() => {
+          const link = document.createElement('a');
+          link.href = sprite.img.src;
+          link.download = sprite.fileName;
+          link.click();
+        }, i * 100); // 100ms delay between downloads
+      });
+    }
+
+    // --- Left-click drag selection box for both galleries ---
+    let isDragging = false;
+    let startX, startY;
+    let dragSelectionBox = null;
+    let dragTargetGallery = null;
+
+    function setupDragSelection(galleryElement, spriteList) {
+      galleryElement.addEventListener('mousedown', e => {
+        if (e.button === 0 && (e.target === galleryElement || e.target.classList.contains('sprite'))) {
+          isDragging = true;
+          dragTargetGallery = galleryElement;
+          const rect = galleryElement.getBoundingClientRect();
+          startX = e.clientX - rect.left;
+          startY = e.clientY - rect.top;
+          dragSelectionBox = document.createElement('div');
+          dragSelectionBox.className = 'selection-box';
+          dragSelectionBox.style.left = startX + 'px';
+          dragSelectionBox.style.top = startY + 'px';
+          dragSelectionBox.style.width = '0px';
+          dragSelectionBox.style.height = '0px';
+          galleryElement.appendChild(dragSelectionBox);
+          e.preventDefault();
+        }
+      });
+    }
+
+    setupDragSelection(gallery, sprites);
+    setupDragSelection(flippedGallery, flippedSprites);
+
+    document.addEventListener('mousemove', e => {
+      if (isDragging && dragSelectionBox && dragTargetGallery) {
+        const rect = dragTargetGallery.getBoundingClientRect();
+        const currentX = e.clientX - rect.left;
+        const currentY = e.clientY - rect.top;
+        const left = Math.min(startX, currentX);
+        const top = Math.min(startY, currentY);
+        const width = Math.abs(currentX - startX);
+        const height = Math.abs(currentY - startY);
+        dragSelectionBox.style.left = left + 'px';
+        dragSelectionBox.style.top = top + 'px';
+        dragSelectionBox.style.width = width + 'px';
+        dragSelectionBox.style.height = height + 'px';
+      }
+    });
+
+    document.addEventListener('mouseup', e => {
+      if (isDragging && dragSelectionBox && dragTargetGallery) {
+        const rect = dragTargetGallery.getBoundingClientRect();
+        const currentX = e.clientX - rect.left;
+        const currentY = e.clientY - rect.top;
+        const left = Math.min(startX, currentX);
+        const top = Math.min(startY, currentY);
+        const width = Math.abs(currentX - startX);
+        const height = Math.abs(currentY - startY);
+        // Toggle selection for images inside the box
+        let spriteList = dragTargetGallery === gallery ? sprites : flippedSprites;
+        spriteList.forEach(sprite => {
+          const imgRect = sprite.element.getBoundingClientRect();
+          const imgLeft = imgRect.left - rect.left;
+          const imgTop = imgRect.top - rect.top;
+          const imgRight = imgLeft + imgRect.width;
+          const imgBottom = imgTop + imgRect.height;
+          if (left < imgRight && left + width > imgLeft &&
+              top < imgBottom && top + height > imgTop) {
+            // Toggle selection state - if selected, deselect; if deselected, select
+            sprite.element.classList.toggle('selected');
+          }
+        });
+        dragSelectionBox.remove();
+        dragSelectionBox = null;
+        dragTargetGallery = null;
+        isDragging = false;
+      }
+    });
+  </script>
 </body>
 </html>
-
